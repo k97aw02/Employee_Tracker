@@ -1,5 +1,6 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+const cTable = require('console.table');
 
 var connection = mysql.createConnection(
     {
@@ -18,7 +19,7 @@ function validateString(answer) {
     return false;
 } 
 
-// An expected number cannot be a string nor include redundant commas
+
 function validateNumber(answer) {
     if (answer != "" && !isNaN(parseInt(answer))) {
         return true;
@@ -31,7 +32,7 @@ function continuePrompt() {
         {
             type: "confirm",
             name: "continue",
-            message: "Do you want to continue?"
+            message: "Do you wish to continue?"
         }
     ]).then(function (data) {
         if (data.continue) {
@@ -43,7 +44,6 @@ function continuePrompt() {
     });
 }
 
-// User is presented with prompts when application is started
 function start() {
     inquirer.prompt([
         {
@@ -62,7 +62,7 @@ function start() {
         }
     ]).then(function (answer) {
         switch (answer.selector) {
-            // View All Employees Option
+            
             case "View All Employees":
                 connection.query("SELECT * FROM employee", function (err, data) {
                     if (err) throw err;
@@ -70,7 +70,7 @@ function start() {
                     continuePrompt();
                 });
                 break; 
-            // View All Departments Option
+            
             case "View All Departments":
                 connection.query("SELECT * FROM department", function (err, data) {
                     if (err) throw err;
@@ -78,7 +78,7 @@ function start() {
                     continuePrompt();
                 });
                 break; 
-            // View All Roles Option
+            
             case "View All Roles":
                 connection.query("SELECT * FROM role", function (err, data) { 
                     if (err) throw err;
@@ -86,7 +86,7 @@ function start() {
                     continuePrompt();
                 });
                 break;
-            // Add A Role Option
+            
             case "Add Role":
                 connection.query("SELECT id, department FROM department", function (err, data) {
                     if (err) throw err;
@@ -122,7 +122,7 @@ function start() {
                         });
                     });
                     break;
-                // Add an Employee Option
+                
                 case "Add Employee":
                     let role_id = 1;
                     console.log(role_id);
@@ -136,19 +136,19 @@ function start() {
                             {
                                 type: "input",
                                 name: "firstName",
-                                message: "Enter this employee's first name:",
+                                message: "Type employee's first name:",
                                 validate: validateString
                             },
                             {
                                 type: "input",
                                 name: "last_name",
-                                message: "Enter this employee's last name:",
+                                message: "Type employee's last name:",
                                 validate: validateString
                             },
                             {
                                 type: "list",
                                 name: "role",
-                                message: "Select this employee's role:",
+                                message: "Select employee's role:",
                                 choices: [...choices]
                             }
                         ]).then(function (data) {
