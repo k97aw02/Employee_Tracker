@@ -10,7 +10,7 @@ var connection = mysql.createConnection(
         database: "employee_cms_db"
     }
 );
-// An expected string cannot be a number
+
 function validateString(answer) {
     if (answer != "" && isNaN(parseInt(answer))) {
         return true;
@@ -48,20 +48,20 @@ function start() {
     inquirer.prompt([
         {
             type: "list",
-            name: "mainMenu",
-            message: "Select an option:",
+            name: "selector",
+            message: "Please make a selection:",
             choices: [
-                "Add A Department",
-                "Add A Role",
-                "Add An Employee",
+                "View All Employees",
                 "View All Departments",
                 "View All Roles",
-                "View All Employees",  
+                "Add Employee",
+                "Add Department",
+                "Add Role",                
                 "Update Role"
             ]
         }
     ]).then(function (answer) {
-        switch (answer.mainMenu) {
+        switch (answer.selector) {
             // View All Employees Option
             case "View All Employees":
                 connection.query("SELECT * FROM employee", function (err, data) {
@@ -80,14 +80,14 @@ function start() {
                 break; 
             // View All Roles Option
             case "View All Roles":
-                connection.query("SELECT * FROM jobTitle", function (err, data) {
+                connection.query("SELECT * FROM role", function (err, data) { 
                     if (err) throw err;
                     console.table(data);
                     continuePrompt();
                 });
                 break;
             // Add A Role Option
-            case "Add A Role":
+            case "Add Role":
                 connection.query("SELECT id, department FROM department", function (err, data) {
                     if (err) throw err;
                     let choices = data.map(x => ({
@@ -115,7 +115,7 @@ function start() {
                             }
                         ]).then(function (data) {
                             let deptID = 1;
-                            connection.query(`INSERT INTO jobTitle (title, salary, department_id) VALUES ('${data.title}', ${data.salary}, ${deptID})`, function (err, data) {
+                            connection.query(`INSERT INTO role (title, salary, department_id) VALUES ('${data.title}', ${data.salary}, ${deptID})`, function (err, data) {
                                 if (err) throw err;
                                 continuePrompt();
                             });
@@ -123,10 +123,10 @@ function start() {
                     });
                     break;
                 // Add an Employee Option
-                case "Add An Employee":
-                    let role_no = 1;
-                    console.log(role_no);
-                    connection.query("SELECT id, title FROM jobTitle", function (err, data) {
+                case "Add Employee":
+                    let role_id = 1;
+                    console.log(role_id);
+                    connection.query("SELECT id, title FROM role", function (err, data) {
                         if (err) throw err;
                         let choices = data.map(x => ({
                             value: x.id,
@@ -141,7 +141,7 @@ function start() {
                             },
                             {
                                 type: "input",
-                                name: "lastName",
+                                name: "last_name",
                                 message: "Enter this employee's last name:",
                                 validate: validateString
                             },
@@ -152,16 +152,16 @@ function start() {
                                 choices: [...choices]
                             }
                         ]).then(function (data) {
-                            connection.query(`INSERT INTO employee (firstname, lastname, role_no, manager_id) VALUES ('${data.firstName}', '${data.lastName}', ${role_no}, 0)`, function (err, data) {
+                            connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${data.firstName}', '${data.last_name}', ${role_id}, 0)`, function (err, data) {
                                 if (err) throw err;
-                                console.log("Employee has been added to the table!")
+                                console.log("Employee added to database")
                                 continuePrompt();
                             });
                         });
                     });
                     break;
-                    // Add A Department Option (This must be selected first)
-                case "Add A Department":
+                    
+                case "Add Department":
                     inquirer.prompt([
                         {
                             type: "input",
@@ -179,21 +179,21 @@ function start() {
                     });
                     break;
                 
-                // Update An Employee Option
+                
                 case "Update Employee Role":
                     const emp = {
-                        firstname: "",
-                        lastname: "",
-                        role_no: 0,
+                        first_name: "",
+                        last_name: "",
+                        role_id: 0,
                         manager_id: 0,
-                        empID: 0
+                        id: 0
                     };
-                    connection.query("SELECT id, firstname, lastname FROM employee", function (err, data) {
+                    connection.query("SELECT id, first_name, last_name FROM employee", function (err, data) {
                         if (err) throw err;
                          let choices = data.map(x => ({
                             value: x.id,
-                            name: x.firstname,
-                            nameLast: x.lastname
+                            name: x.first_name,
+                            nameLast: x.last_name
                          })) 
                         inquirer.prompt([
                             {
@@ -204,7 +204,7 @@ function start() {
                             }
                         ]).then(function (data) {
                             var arr = data.employee.split(" ");
-                            emp.empID = parseInt(arr[0]);
+                            emp.id = parseInt(arr[0]);
                             inquirer.prompt([
                                 {
                                     type: "input",
@@ -214,14 +214,14 @@ function start() {
                                 },
                                 {
                                     type: "input",
-                                    name: "lastName",
+                                    name: "last_name",
                                     message: "Enter the employee's last name:",
                                     validate: validateString
                                 }
                             ]).then(function (data) {
-                                emp.firstname = data.firstName;
-                                emp.lastname = data.lastName;
-                                connection.query("SELECT id, title FROM jobTitle", function (err, data) {
+                                emp.first_name = data.firstName;
+                                emp.last_name = data.last_name;
+                                connection.query("SELECT id, title FROM role", function (err, data) {
                                     if (err) throw err;
                                     let choices = data.map(x => ({
                                         value: x.id,
@@ -235,14 +235,14 @@ function start() {
                                                 choices: [...choices]
                                             }
                                     ]).then(function (data) {
-                                        let arr = data.jobTitle.split(" ");
-                                        emp.role_no = data.jobTitle;
-                                        connection.query("SELECT id, firstname, lastname FROM employee", function (err, data) {
+                                        let arr = data.role.split(" ");
+                                        emp.role_id = data.role;
+                                        connection.query("SELECT id, first_name, last_name FROM employee", function (err, data) {
                                             if (err) throw err;
                                             let choices = data.map(x => ({
                                                 value: x.id,
-                                                name: x.firstname,
-                                                nameLast: x.lastname
+                                                name: x.first_name,
+                                                nameLast: x.last_name
                                             })) 
                                             inquirer.prompt([
                                                 {
@@ -259,7 +259,7 @@ function start() {
                                                     let arr = data.manager.split(" ");
                                                     emp.manager_id = parseInt(arr[0]);
                                                 }
-                                                connection.query(`UPDATE employee SET firstname = '${emp.firstname}', lastname = '${emp.lastname}', role_no = ${emp.role_no}, manager_id = ${emp.manager_id} WHERE id = ${emp.empID}`, function (err, data) {
+                                                connection.query(`UPDATE employee SET first_name = '${emp.first_name}', last_name = '${emp.last_name}', role_id = ${emp.role_id}, manager_id = ${emp.manager_id} WHERE id = ${emp.id}`, function (err, data) {
                                                     if (err) throw err;
                                                     continuePrompt();
                                                     return data;
